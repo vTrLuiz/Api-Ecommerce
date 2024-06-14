@@ -3,7 +3,7 @@ const faker = require('faker');
 const express = require('express');
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3333;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
@@ -40,6 +40,14 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
 
   return [...acc, ...products]
 }, [])
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the Products API');
+});
+
+app.get('/products', (req, res) => {
+  res.json(allProducts);
+});
 
 module.exports = {
   products: allProducts
