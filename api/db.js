@@ -1,7 +1,5 @@
 const faker = require('faker');
-
 const cors = require('cors');
-
 const express = require('express');
 const app = express();
 
@@ -11,8 +9,10 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 app.use(cors({
-    origin: '*'
+  origin: '*'
 }));
+
+app.use(express.json()); // Adiciona o middleware para interpretar JSON
 
 const TOTAL_PAGES = 5;
 
@@ -29,22 +29,22 @@ const baseProducts = [
   { name: 'Camiseta DREAMER', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-01.jpg', category: 't-shirts' },
   { name: 'Caneca Decaf! P&Co', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-02.jpg', category: 'mugs' },
   { name: 'Camiseta Ramones', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-04.jpg', category: 't-shirts' },
-]
+];
 
 const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   const products = baseProducts.map(product => ({
-    ...product, 
+    ...product,
     id: faker.datatype.uuid(),
     price_in_cents: faker.datatype.number({
       min: 2000,
       max: 10000,
     }),
     sales: faker.datatype.number(40),
-    created_at: faker.date.past()
+    created_at: faker.date.past(),
   })).sort(() => .5 - Math.random());
 
-  return [...acc, ...products]
-}, [])
+  return [...acc, ...products];
+}, []);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Products API');
@@ -54,6 +54,25 @@ app.get('/products', (req, res) => {
   res.json(allProducts);
 });
 
-module.exports = {
-  products: allProducts
-}
+// Rota para criar novos produtos (requisição POST)
+app.post('/products', (req, res) => {
+  const { name, description, image_url, category, price_in_cents, sales } = req.body;
+  
+  if (!name || !description || !image_url || !category || !price_in_cents || !sales) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  const newProduct = {
+    id: faker.datatype.uuid(),
+    name,
+    description,
+    image_url,
+    category,
+    price_in_cents,
+    sales,
+    created_at: new Date(),
+  };
+
+  allProducts.push(newProduct);
+  res.status(201).json(newProduct);
+});
