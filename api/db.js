@@ -1,31 +1,27 @@
-import express from 'express';
-import cors from 'cors';
-import { graphqlHTTP } from 'express-graphql';
-import { buildSchema } from 'graphql';
-import faker from 'faker';
-
+const faker = require('faker');
+const cors = require('cors');
+const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3333;
 
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+	@@ -11,9 +9,11 @@ app.listen(PORT, '0.0.0.0', () => {
+});
+
+app.use(cors({
+  origin: '*'
+}));
+
+app.use(express.json()); // Adiciona o middleware para interpretar JSON
+
+const TOTAL_PAGES = 5;
 
 const baseProducts = [
-  { name: 'Caneca de cerâmica rústica', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-06.jpg', category: 'mugs' },
-  { name: 'Camiseta not today.', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-05.jpg', category: 't-shirts' },
-  { name: 'Caneca Black Ring', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-04.jpg', category: 'mugs' },
-  { name: 'Camiseta Broken Saints', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-03.jpg', category: 't-shirts' },
-  { name: 'Camiseta Outcast', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-06.jpg', category: 't-shirts' },
-  { name: 'Caneca The Grounds', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-05.jpg', category: 'mugs' },
-  { name: 'Camiseta evening', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-02.jpg', category: 't-shirts' },
-  { name: 'Caneca preto fosco', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-01.jpg', category: 'mugs' },
-  { name: 'Caneca Never settle', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-03.jpg', category: 'mugs' },
+	@@ -29,22 +29,22 @@ const baseProducts = [
   { name: 'Camiseta DREAMER', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-01.jpg', category: 't-shirts' },
   { name: 'Caneca Decaf! P&Co', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-02.jpg', category: 'mugs' },
   { name: 'Camiseta Ramones', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-04.jpg', category: 't-shirts' },
 ];
 
-const allProducts = new Array(5).fill(1).reduce((acc) => {
+const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   const products = baseProducts.map(product => ({
     ...product,
     id: faker.datatype.uuid(),
@@ -40,59 +36,31 @@ const allProducts = new Array(5).fill(1).reduce((acc) => {
   return [...acc, ...products];
 }, []);
 
-// Definindo o schema GraphQL
-const schema = buildSchema(`
-  type Product {
-    id: ID!
-    name: String!
-    description: String!
-    image_url: String!
-    category: String!
-    price_in_cents: Int!
-    sales: Int!
-    created_at: String!
+app.get('/', (req, res) => {
+  res.send('Welcome to the Products API');
+	@@ -54,6 +54,25 @@ app.get('/products', (req, res) => {
+  res.json(allProducts);
+});
+
+// Rota para criar novos produtos (requisição POST)
+app.post('/products', (req, res) => {
+  const { name, description, image_url, category, price_in_cents, sales } = req.body;
+
+  if (!name || !description || !image_url || !category || !price_in_cents || !sales) {
+    return res.status(400).json({ error: 'All fields are required' });
   }
 
-  type Query {
-    products: [Product]
-    product(id: ID!): Product
-  }
+  const newProduct = {
+    id: faker.datatype.uuid(),
+    name,
+    description,
+    image_url,
+    category,
+    price_in_cents,
+    sales,
+    created_at: new Date(),
+  };
 
-  input ProductInput {
-    name: String!
-    description: String!
-    image_url: String!
-    category: String!
-    price_in_cents: Int!
-    sales: Int!
-  }
-
-  type Mutation {
-    addProduct(input: ProductInput): Product
-  }
-`);
-
-// Resolvers para as queries e mutations
-const root = {
-  products: () => allProducts,
-  product: ({ id }: { id: string }) => allProducts.find(product => product.id === id),
-  addProduct: ({ input }: { input: any }) => {
-    const newProduct = {
-      id: faker.datatype.uuid(),
-      ...input,
-      created_at: new Date().toISOString(),
-    };
-    allProducts.push(newProduct);
-    return newProduct;
-  }
-};
-
-app.use('/graphql', graphqlHTTP({
-  schema: schema,
-  rootValue: root,
-  graphiql: true,
-}));
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
+  allProducts.push(newProduct);
+  res.status(201).json(newProduct);
 });
