@@ -54,6 +54,17 @@ app.get('/products', (req, res) => {
   res.json(allProducts);
 });
 
+app.get('/products/:id', (req, res) => {
+  const productId = req.params.id;
+  const product = products.find(p => p.id === productId);
+  if (product) {
+    res.json({ data: { Product: product } });
+  } else {
+    res.status(404).send('Product not found');
+  }
+});
+
+
 // Rota para criar novos produtos (requisição POST)
 app.post('/products', (req, res) => {
   const { name, description, image_url, category, price_in_cents, sales } = req.body;
