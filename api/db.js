@@ -1,20 +1,14 @@
-const faker = require('faker');
-const cors = require('cors');
-const express = require('express');
+import express from 'express';
+import cors from 'cors';
+import { graphqlHTTP } from 'express-graphql';
+import { buildSchema } from 'graphql';
+import faker from 'faker';
+
 const app = express();
-
 const PORT = process.env.PORT || 3333;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
-});
 
-app.use(cors({
-  origin: '*'
-}));
-
-app.use(express.json()); // Adiciona o middleware para interpretar JSON
-
-const TOTAL_PAGES = 5;
+app.use(cors({ origin: '*' }));
+app.use(express.json());
 
 const baseProducts = [
   { name: 'Caneca de cerâmica rústica', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/caneca-06.jpg', category: 'mugs' },
@@ -31,7 +25,7 @@ const baseProducts = [
   { name: 'Camiseta Ramones', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-04.jpg', category: 't-shirts' },
 ];
 
-const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
+const allProducts = new Array(5).fill(1).reduce((acc) => {
   const products = baseProducts.map(product => ({
     ...product,
     id: faker.datatype.uuid(),
@@ -46,34 +40,59 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   return [...acc, ...products];
 }, []);
 
-app.get('/', (req, res) => {
-  res.send('Welcome to the Products API');
-});
-
-app.get('/products', (req, res) => {
-  res.json(allProducts);
-});
-
-
-// Rota para criar novos produtos (requisição POST)
-app.post('/products', (req, res) => {
-  const { name, description, image_url, category, price_in_cents, sales } = req.body;
-  
-  if (!name || !description || !image_url || !category || !price_in_cents || !sales) {
-    return res.status(400).json({ error: 'All fields are required' });
+// Definindo o schema GraphQL
+const schema = buildSchema(`
+  type Product {
+    id: ID!
+    name: String!
+    description: String!
+    image_url: String!
+    category: String!
+    price_in_cents: Int!
+    sales: Int!
+    created_at: String!
   }
 
-  const newProduct = {
-    id: faker.datatype.uuid(),
-    name,
-    description,
-    image_url,
-    category,
-    price_in_cents,
-    sales,
-    created_at: new Date(),
-  };
+  type Query {
+    products: [Product]
+    product(id: ID!): Product
+  }
 
-  allProducts.push(newProduct);
-  res.status(201).json(newProduct);
+  input ProductInput {
+    name: String!
+    description: String!
+    image_url: String!
+    category: String!
+    price_in_cents: Int!
+    sales: Int!
+  }
+
+  type Mutation {
+    addProduct(input: ProductInput): Product
+  }
+`);
+
+// Resolvers para as queries e mutations
+const root = {
+  products: () => allProducts,
+  product: ({ id }: { id: string }) => allProducts.find(product => product.id === id),
+  addProduct: ({ input }: { input: any }) => {
+    const newProduct = {
+      id: faker.datatype.uuid(),
+      ...input,
+      created_at: new Date().toISOString(),
+    };
+    allProducts.push(newProduct);
+    return newProduct;
+  }
+};
+
+app.use('/graphql', graphqlHTTP({
+  schema: schema,
+  rootValue: root,
+  graphiql: true,
+}));
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
 });
