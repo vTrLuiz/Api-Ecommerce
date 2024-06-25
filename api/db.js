@@ -45,8 +45,6 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   return [...acc, ...products];
 }, []);
 
-console.log("Generated Products: ", allProducts);
-
 // Rota raiz
 app.get('/', (req, res) => {
   res.send('Welcome to the Products API');
