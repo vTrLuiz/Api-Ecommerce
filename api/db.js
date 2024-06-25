@@ -10,7 +10,7 @@ app.use(cors({
   origin: '*'
 }));
 
-app.use(express.json()); // Middleware para interpretar JSON
+app.use(express.json());
 
 const TOTAL_PAGES = 5;
 
@@ -53,10 +53,10 @@ app.get('/products', (req, res) => {
 });
 
 // Rota para buscar um produto pelo ID (requisição GET)
-app.get('/products/:id', (req, res) => {
-  const { id } = req.params;
+app.get('/product', (req, res) => {
+  const { id } = req.query;
   const product = allProducts.find(p => p.id === id);
-  
+
   if (!product) {
     return res.status(404).json({ error: 'Product not found' });
   }
@@ -67,7 +67,7 @@ app.get('/products/:id', (req, res) => {
 // Rota para criar novos produtos (requisição POST)
 app.post('/products', (req, res) => {
   const { name, description, image_url, category, price_in_cents, sales } = req.body;
-  
+
   if (!name || !description || !image_url || !category || !price_in_cents || !sales) {
     return res.status(400).json({ error: 'All fields are required' });
   }
