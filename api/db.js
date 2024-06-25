@@ -52,8 +52,12 @@ app.get('/', (req, res) => {
 
 // Rota para obter todos os produtos
 app.get('/products', (req, res) => {
-  res.json(allProducts);
-});
+  const { category } = req.query;
+  if (category) {
+    const products = allProducts.filter(p => p.category === category);
+
+    return res.json(products);
+  }});
 
 // Rota para obter um produto pelo ID
 app.get('/product', (req, res) => {
