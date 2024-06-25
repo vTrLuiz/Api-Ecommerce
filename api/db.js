@@ -29,6 +29,7 @@ const baseProducts = [
   { name: 'Camiseta Ramones', description: faker.lorem.paragraph(), image_url: 'https://storage.googleapis.com/xesque-dev/challenge-images/camiseta-04.jpg', category: 't-shirts' },
 ];
 
+// Simular a geração de produtos
 const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   const products = baseProducts.map(product => ({
     ...product,
@@ -44,15 +45,19 @@ const allProducts = new Array(TOTAL_PAGES).fill(1).reduce((acc) => {
   return [...acc, ...products];
 }, []);
 
+console.log("Generated Products: ", allProducts);
+
+// Rota raiz
 app.get('/', (req, res) => {
   res.send('Welcome to the Products API');
 });
 
+// Rota para obter todos os produtos
 app.get('/products', (req, res) => {
   res.json(allProducts);
 });
 
-// Rota para buscar um produto pelo ID (requisição GET)
+// Rota para obter um produto pelo ID
 app.get('/product', (req, res) => {
   const { id } = req.query;
   const product = allProducts.find(p => p.id === id);
@@ -64,7 +69,7 @@ app.get('/product', (req, res) => {
   res.json(product);
 });
 
-// Rota para criar novos produtos (requisição POST)
+// Rota para criar novos produtos (não foi alterada)
 app.post('/products', (req, res) => {
   const { name, description, image_url, category, price_in_cents, sales } = req.body;
 
@@ -87,6 +92,7 @@ app.post('/products', (req, res) => {
   res.status(201).json(newProduct);
 });
 
+// Iniciar o servidor
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
