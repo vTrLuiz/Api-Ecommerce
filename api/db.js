@@ -52,7 +52,7 @@ app.get('/', (req, res) => {
 
 // Rota para obter todos os produtos
 app.get('/products', (req, res) => {
-  const { category, priority } = req.query;
+  const { category, sortField, sortOrder } = req.query;
 
   // Filtrar por categoria se fornecida
   let filteredProducts = allProducts;
@@ -61,24 +61,15 @@ app.get('/products', (req, res) => {
   }
 
   // Aplicar filtro de prioridade se fornecida
-  if (priority) {
-    switch (priority) {
-      case 'POPULARIDADE':
-        // Exemplo: Ordenar por popularidade (vendas, comentários, etc.)
-        filteredProducts.sort((a, b) => b.popularity - a.popularity);
-        break;
-      case 'MAIOR_PRECO':
-        // Exemplo: Ordenar por maior preço
-        filteredProducts.sort((a, b) => b.price_in_cents - a.price_in_cents);
-        break;
-      case 'MENOR_PRECO':
-        // Exemplo: Ordenar por menor preço
-        filteredProducts.sort((a, b) => a.price_in_cents - b.price_in_cents);
-        break;
-      default:
-        // Prioridade não reconhecida, retornar todos os produtos
-        break;
-    }
+  if (sortField && sortOrder) {
+    filteredProducts.sort((a, b) => {
+      if (sortOrder === 'ASC') {
+        return a[sortField] > b[sortField] ? 1 : -1;
+      } else if (sortOrder === 'DESC') {
+        return a[sortField] < b[sortField] ? 1 : -1;
+      }
+      return 0;
+    });
   }
 
   res.json(filteredProducts);
